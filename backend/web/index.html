@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Academic Research Agent — AG-UI</title>
+  <style>
+    :root {
+      --bg: #0f0f12;
+      --surface: #1a1a1f;
+      --border: #2d2d35;
+      --text: #e4e4e7;
+      --text-muted: #71717a;
+      --accent: #6366f1;
+      --accent-hover: #818cf8;
+      --user-msg: #2d2d35;
+      --agent-msg: #18181b;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+    .api-config {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .api-config label { color: var(--text-muted); font-size: 0.875rem; }
+    .api-config input {
+      width: 220px;
+      padding: 0.4rem 0.6rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 0.875rem;
+    }
+    .status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: var(--surface);
+    }
+    .status.connected { color: #22c55e; }
+    .status.error { color: #ef4444; }
+    main {
+      flex: 1;
+      overflow: auto;
+      padding: 1rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .message {
+      max-width: 85%;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .message.user {
+      align-self: flex-end;
+      background: var(--accent);
+      color: #fff;
+    }
+    .message.agent {
+      align-self: flex-start;
+      background: var(--agent-msg);
+      border: 1px solid var(--border);
+    }
+    .message .author { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.25rem; }
+    .typing {
+      align-self: flex-start;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+    .input-row {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      gap: 0.5rem;
+      align-items: flex-end;
+    }
+    #input {
+      flex: 1;
+      min-height: 44px;
+      max-height: 120px;
+      padding: 0.6rem 0.75rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font: inherit;
+      resize: none;
+    }
+    #input:focus { outline: none; border-color: var(--accent); }
+    button {
+      padding: 0.6rem 1rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    button:hover { background: var(--accent-hover); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .error-msg { color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Academic Research Agent (AG-UI)</h1>
+    <div class="api-config">
+      <label for="apiBase">API base:</label>
+      <input type="text" id="apiBase" value="http://localhost:8000" placeholder="http://localhost:8000">
+      <span id="status" class="status">—</span>
+    </div>
+  </header>
+  <main id="messages"></main>
+  <div class="input-row">
+    <textarea id="input" rows="1" placeholder="Ask the research assistant…" disabled></textarea>
+    <button id="send" disabled>Send</button>
+  </div>
+  <div id="error" class="error-msg" style="display:none; padding: 0 1.5rem 1rem;"></div>
+
+  <script>
+    (function () {
+      const APP_NAME = 'academic_research';
+      const USER_ID = 'default';
+      const SESSION_KEY = 'ag_ui_session_id';
+
+      function genId() {
+        return 's_' + Math.random().toString(36).slice(2, 12);
+      }
+
+      function getSessionId() {
+        let id = sessionStorage.getItem(SESSION_KEY);
+        if (!id) {
+          id = genId();
+          sessionStorage.setItem(SESSION_KEY, id);
+        }
+        return id;
+      }
+
+      function setSessionId(id) {
+        sessionStorage.setItem(SESSION_KEY, id);
+      }
+
+      function getBase() {
+        return (document.getElementById('apiBase').value || '').replace(/\/$/, '');
+      }
+
+      function setStatus(text, kind) {
+        const el = document.getElementById('status');
+        el.textContent = text;
+        el.className = 'status' + (kind ? ' ' + kind : '');
+      }
+
+      function showError(msg) {
+        const el = document.getElementById('error');
+        el.textContent = msg;
+        el.style.display = msg ? 'block' : 'none';
+      }
+
+      function appendMessage(role, text, author) {
+        const main = document.getElementById('messages');
+        const div = document.createElement('div');
+        div.className = 'message ' + role;
+        if (author) {
+          const auth = document.createElement('div');
+          auth.className = 'author';
+          auth.textContent = author;
+          div.appendChild(auth);
+        }
+        const content = document.createElement('div');
+        content.textContent = text;
+        div.appendChild(content);
+        main.appendChild(div);
+        main.scrollTop = main.scrollHeight;
+      }
+
+      function showTyping(show) {
+        let el = document.getElementById('typing');
+        if (show) {
+          if (!el) {
+            el = document.createElement('div');
+            el.id = 'typing';
+            el.className = 'typing';
+            el.textContent = 'Agent is thinking…';
+            document.getElementById('messages').appendChild(el);
+          }
+          el.style.display = 'block';
+        } else if (el) {
+          el.style.display = 'none';
+        }
+      }
+
+      async function ensureSession() {
+        const base = getBase();
+        const sessionId = getSessionId();
+        const url = `${base}/apps/${APP_NAME}/users/${USER_ID}/sessions/${sessionId}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        if (res.ok) return sessionId;
+        if (res.status === 409) return sessionId;
+        const err = await res.text();
+        throw new Error('Session failed: ' + (err || res.status));
+      }
+
+      async function checkConnection() {
+        const base = getBase();
+        setStatus('Checking…', '');
+        showError('');
+        try {
+          const r = await fetch(base + '/list-apps');
+          if (!r.ok) throw new Error(r.status + ' ' + r.statusText);
+          const apps = await r.json();
+          if (!Array.isArray(apps) || !apps.includes(APP_NAME)) {
+            throw new Error('Agent "' + APP_NAME + '" not found. Available: ' + (apps && apps.join(', ')) || 'none');
+          }
+          await ensureSession();
+          setStatus('Connected', 'connected');
+          document.getElementById('input').disabled = false;
+          document.getElementById('send').disabled = false;
+        } catch (e) {
+          setStatus('Disconnected', 'error');
+          showError(e.message || 'Cannot reach API. Start with: uv run adk api_server . --allow_origins "*"');
+          document.getElementById('input').disabled = true;
+          document.getElementById('send').disabled = true;
+        }
+      }
+
+      async function sendMessage(text) {
+        const base = getBase();
+        const sessionId = getSessionId();
+        const inputEl = document.getElementById('input');
+        const sendBtn = document.getElementById('send');
+        inputEl.disabled = true;
+        sendBtn.disabled = true;
+        showTyping(true);
+        showError('');
+
+        appendMessage('user', text);
+
+        let fullText = '';
+        try {
+          const res = await fetch(base + '/run_sse', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              appName: APP_NAME,
+              userId: USER_ID,
+              sessionId: sessionId,
+              newMessage: { role: 'user', parts: [{ text: text }] },
+              streaming: true
+            })
+          });
+          if (!res.ok) {
+            const err = await res.text();
+            throw new Error(err || res.status);
+          }
+          const reader = res.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+          let agentBlock = null;
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+            for (const line of lines) {
+              if (line.startsWith('data:')) {
+                try {
+                  const data = JSON.parse(line.slice(5).trim());
+                  const parts = data.content && data.content.parts;
+                  if (parts) {
+                    for (const p of parts) {
+                      if (p.text) {
+                        fullText += p.text;
+                        if (!agentBlock) {
+                          agentBlock = document.createElement('div');
+                          agentBlock.className = 'message agent';
+                          if (data.author) {
+                            const auth = document.createElement('div');
+                            auth.className = 'author';
+                            auth.textContent = data.author;
+                            agentBlock.appendChild(auth);
+                          }
+                          agentBlock.appendChild(document.createTextNode(''));
+                          document.getElementById('messages').appendChild(agentBlock);
+                          document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+                        }
+                        agentBlock.lastChild.textContent = fullText;
+                      }
+                    }
+                  }
+                } catch (_) {}
+              }
+            }
+          }
+          if (!agentBlock && fullText) {
+            appendMessage('agent', fullText, 'academic_research');
+          }
+        } catch (e) {
+          showError(e.message || 'Request failed');
+          appendMessage('agent', 'Error: ' + (e.message || 'Unknown error'), '');
+        } finally {
+          showTyping(false);
+          inputEl.disabled = false;
+          sendBtn.disabled = false;
+          inputEl.value = '';
+          inputEl.focus();
+        }
+      }
+
+      document.getElementById('apiBase').addEventListener('change', checkConnection);
+      document.getElementById('apiBase').addEventListener('blur', checkConnection);
+      document.getElementById('send').addEventListener('click', function () {
+        const input = document.getElementById('input');
+        const t = (input.value || '').trim();
+        if (t) sendMessage(t);
+      });
+      document.getElementById('input').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          document.getElementById('send').click();
+        }
+      });
+
+      checkConnection();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+.env
+.env.local
+*.local
+
+__pycache__/
+**/__pycache__/
+
+# Backend (Python): .venv and .env live in backend/
+backend/.venv/
+backend/.env
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
