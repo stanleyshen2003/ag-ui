@@ -17,7 +17,7 @@
 from google.adk import Agent
 from google.adk.tools import google_search
 
-from . import prompt
+from academic_research.prompts import get_prompt
 
 MODEL = "gemini-2.5-pro"
 
@@ -25,7 +25,7 @@ MODEL = "gemini-2.5-pro"
 academic_websearch_agent = Agent(
     model=MODEL,
     name="academic_websearch_agent",
-    instruction=prompt.ACADEMIC_WEBSEARCH_PROMPT,
+    instruction=get_prompt("academic_websearch"),
     output_key="recent_citing_papers",
     tools=[google_search],
 )

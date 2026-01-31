@@ -8,6 +8,7 @@ __pycache__/
 # Backend (Python): .venv and .env live in backend/
 backend/.venv/
 backend/.env
+backend/mlruns/
 
 # Frontend (Next.js)
 frontend/node_modules/

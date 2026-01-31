@@ -1,0 +1,53 @@
+# Register prompts to MLflow Prompt Registry on push to main.
+# Creates a new prompt version for each prompt when prompt files change.
+name: Register Prompts to MLflow
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "backend/prompts/**"
+      - ".github/workflows/register-prompts.yml"
+  workflow_dispatch:
+
+jobs:
+  register-prompts:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Set MLflow tracking URI
+        run: |
+          if [ -n "${{ secrets.MLFLOW_TRACKING_URI }}" ]; then
+            echo "MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }}" >> $GITHUB_ENV
+          else
+            echo "MLFLOW_TRACKING_URI=https://mlflow.stanley.winlab.tw" >> $GITHUB_ENV
+          fi
+
+      - name: Register prompts to MLflow
+        run: uv run python scripts/register_prompts.py --commit-message "CI: ${{ github.sha }} - ${{ github.event.head_commit.message }}"
+
+      - name: Upload MLflow artifacts (when using local store)
+        if: success() && hashFiles('backend/mlruns/**') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlflow-prompts
+          path: backend/mlruns/
+          retention-days: 30

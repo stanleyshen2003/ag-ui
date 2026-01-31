@@ -17,7 +17,7 @@
 from google.adk.agents import LlmAgent
 from google.adk.tools.agent_tool import AgentTool
 
-from . import prompt
+from .prompts import get_prompt
 from .sub_agents.academic_newresearch import academic_newresearch_agent
 from .sub_agents.academic_websearch import academic_websearch_agent
 
@@ -38,7 +38,7 @@ academic_coordinator = AcademicCoordinatorAgent(
         "for new research directions, and accessing web resources "
         "to acquire knowledge"
     ),
-    instruction=prompt.ACADEMIC_COORDINATOR_PROMPT,
+    instruction=get_prompt("academic_coordinator"),
     output_key="seminal_paper",
     tools=[
         AgentTool(agent=academic_websearch_agent),
