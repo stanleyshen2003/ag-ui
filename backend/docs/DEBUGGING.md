@@ -4,19 +4,20 @@
 
 ### Cause
 
-Sub-agents (`academic_websearch`, `academic_newresearch`) use **instruction templates** with `{seminal_paper}` and `{recent_citing_papers}`. ADK substitutes these from **session state**. If the coordinator has not yet written to those keys when a sub-agent runs, substitution raises `KeyError`.
+Sub-agents (`paper_search`, `research_idea`) use **instruction templates** with `{seminal_paper}` and `{recent_citing_papers}`. ADK substitutes these from **session state**. If the coordinator has not yet written to those keys when a sub-agent runs, substitution raises `KeyError`.
 
 - The coordinator has `output_key="seminal_paper"` (it writes to session state when it *produces* output).
 - When the coordinator *invokes* a sub-agent (e.g. right after the user says "find citing papers"), it may not have produced output yet, so `seminal_paper` (and possibly `recent_citing_papers`) can be missing.
 
 ### Fix (applied in this repo)
 
-Sub-agent prompts were updated to **not** depend on session state for `seminal_paper` / `recent_citing_papers`. They now instruct the sub-agent to use the **content of the parent’s message** (the coordinator’s tool-invocation message). The coordinator should include the seminal paper info (and, for newresearch, the citing papers) in that message when calling the tool.
+- **paper_search**: Invoked as AgentTool. Receives input from the coordinator tool-invocation message.
+- **research_idea** (and literature_synthesizer, paper_critic): Registered as sub_agents. They read from the full conversation history (coordinator and websearch outputs), not session state variables, to avoid KeyError when keys are not yet set. Coordinator uses `transfer_to_agent` to delegate.
 
 ### Alternative fixes (if you prefer session state)
 
 - **Initial session state**: If your AG-UI/ADK stack supports it, create sessions with `initial_state={"seminal_paper": "", "recent_citing_papers": ""}` so substitution never fails. You would need to pass this through wherever sessions are created (e.g. `ag_ui_adk`’s session manager / `ADKAgent` if it exposes an `initial_state` or similar).
-- **Flow order**: Ensure the coordinator always produces an output that gets stored in `seminal_paper` (and, for newresearch, that something has written `recent_citing_papers`) *before* invoking the sub-agents. That depends on your coordinator prompt and tool-calling logic.
+- **Flow order**: Ensure the coordinator always produces an output that gets stored in `seminal_paper` (and, for research_idea, that something has written `recent_citing_papers`) *before* invoking the sub-agents. That depends on your coordinator prompt and tool-calling logic.
 
 ### How to verify
 
@@ -34,7 +35,7 @@ AG-UI ADK infers an “app name” from the **module path** of the root agent. Y
 
 ### Fix (applied in this repo)
 
-The root coordinator is defined as a **subclass of `LlmAgent` in this package** (`AcademicCoordinatorAgent` in `academic_research/agent.py`). Then `inspect.getmodule(academic_coordinator.__class__)` is `academic_research.agent`, so the inferred path is under your project and the mismatch warning no longer appears.
+The root coordinator is defined as a **subclass of `LlmAgent` in this package** (`CoordinatorAgent` in `academic_research/agent.py`). Then `inspect.getmodule(coordinator.__class__)` is `academic_research.agent`, so the inferred path is under your project and the mismatch warning no longer appears.
 
 ### If the warning reappears
 

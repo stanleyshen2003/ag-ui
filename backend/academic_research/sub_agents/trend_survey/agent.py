@@ -12,16 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Academic_newresearch_agent for finding new research lines"""
+"""Trend survey agent for identifying research trends and emerging topics."""
 
 from google.adk import Agent
 
 from academic_research.util.prompts import load_prompt
 
-MODEL = "gemini-2.5-pro"
+from academic_research.sub_agents.paper_search.tools import semanticscholar_search_bulk
 
-academic_newresearch_agent = Agent(
+MODEL = "gemini-2.5-flash"
+
+
+class TrendSurveyAgent(Agent):
+    """Subclass so ADK infers app name from our module, not google.adk.agents."""
+    __module__ = "academic_research.sub_agents.trend_survey.agent"
+
+
+trend_survey_agent = TrendSurveyAgent(
     model=MODEL,
-    name="academic_newresearch_agent",
-    instruction=load_prompt("academic_newresearch"),
+    name="trend_survey_agent",
+    description=load_prompt("trend_survey/description"),
+    instruction=load_prompt("trend_survey/instruction"),
+    tools=[semanticscholar_search_bulk],
 )

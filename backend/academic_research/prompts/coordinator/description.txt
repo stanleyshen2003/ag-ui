@@ -1,0 +1,1 @@
+Helping users explore research topics, locate relevant papers, generate future research directions, synthesize literature, analyze trends, critique methodology, and access web resources for knowledge. Works with topics, keywords, or optionally a specific paper when provided.

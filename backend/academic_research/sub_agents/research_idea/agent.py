@@ -12,20 +12,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Academic_websearch_agent for finding research papers using search tools."""
+"""Research idea agent for finding new research lines."""
 
 from google.adk import Agent
-from google.adk.tools import google_search
 
 from academic_research.util.prompts import load_prompt
+from academic_research.util.tools import fetch_url
 
-MODEL = "gemini-2.5-pro"
+MODEL = "gemini-2.5-flash"
 
 
-academic_websearch_agent = Agent(
+class ResearchIdeaAgent(Agent):
+    """Subclass so ADK infers app name from our module, not google.adk.agents."""
+    __module__ = "academic_research.sub_agents.research_idea.agent"
+
+
+research_idea_agent = ResearchIdeaAgent(
     model=MODEL,
-    name="academic_websearch_agent",
-    instruction=load_prompt("academic_websearch"),
-    output_key="recent_citing_papers",
-    tools=[google_search],
+    name="research_idea_agent",
+    description=load_prompt("research_idea/description"),
+    instruction=load_prompt("research_idea/instruction"),
+    tools=[fetch_url],
 )

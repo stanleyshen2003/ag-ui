@@ -1,0 +1,1 @@
+Synthesizes a collection of papers into structured literature summaries, comparison tables, and key-findings syntheses. Use when the user wants a consolidated view of citing papers or topic-related literature.

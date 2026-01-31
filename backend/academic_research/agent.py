@@ -18,32 +18,35 @@ from google.adk.agents import LlmAgent
 from google.adk.tools.agent_tool import AgentTool
 
 from .util.prompts import load_prompt
-from .sub_agents.academic_newresearch import academic_newresearch_agent
-from .sub_agents.academic_websearch import academic_websearch_agent
+from .sub_agents.literature_synthesizer import literature_synthesizer_agent
+from .sub_agents.paper_critic import paper_critic_agent
+from .sub_agents.research_idea import research_idea_agent
+from .sub_agents.trend_survey import trend_survey_agent
+from .sub_agents.paper_search import paper_search_agent
 
-MODEL = "gemini-2.5-pro"
+MODEL = "gemini-2.5-flash"
 
 
-class AcademicCoordinatorAgent(LlmAgent):
+class CoordinatorAgent(LlmAgent):
     """Root coordinator agent defined in this module so ADK Runner infers app name from academic_research.agent, avoiding 'App name mismatch' warning."""
 
+    __module__ = "academic_research.agent"
 
-academic_coordinator = AcademicCoordinatorAgent(
-    name="academic_coordinator",
+
+coordinator = CoordinatorAgent(
+    name="coordinator",
     model=MODEL,
-    description=(
-        "analyzing seminal papers provided by the users, "
-        "providing research advice, locating current papers "
-        "relevant to the seminal paper, generating suggestions "
-        "for new research directions, and accessing web resources "
-        "to acquire knowledge"
-    ),
-    instruction=load_prompt("academic_coordinator"),
-    output_key="seminal_paper",
+    description=load_prompt("coordinator/description"),
+    instruction=load_prompt("coordinator/instruction"),
     tools=[
-        AgentTool(agent=academic_websearch_agent),
-        AgentTool(agent=academic_newresearch_agent),
+        AgentTool(agent=paper_search_agent),
+        AgentTool(agent=trend_survey_agent),
+    ],
+    sub_agents=[
+        literature_synthesizer_agent,
+        paper_critic_agent,
+        research_idea_agent,
     ],
 )
 
-root_agent = academic_coordinator
+root_agent = coordinator

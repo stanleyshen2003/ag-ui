@@ -1,0 +1,1 @@
+Identifies research trends, emerging topics, and publication/citation patterns in a field. Use when the user wants trend analysis, hot topics, or year-over-year comparisons for a research area.

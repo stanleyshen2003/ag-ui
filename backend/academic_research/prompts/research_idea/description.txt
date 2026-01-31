@@ -1,0 +1,1 @@
+Suggests future research directions based on a seminal paper and recent citing papers. Use after obtaining citing papers to generate novel research area proposals.

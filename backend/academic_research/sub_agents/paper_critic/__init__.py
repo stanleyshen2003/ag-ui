@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Academic_websearch_agent for finding research papers using search tools."""
+"""Paper critic agent for methodology and experiment critique."""
 
 # pylint: disable=unused-import
-from .agent import academic_newresearch_agent
+from .agent import paper_critic_agent

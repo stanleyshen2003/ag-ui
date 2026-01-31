@@ -41,27 +41,35 @@ def _backend_dir() -> Path:
 
 
 def _discover_prompts(root: Path) -> list[tuple[str, Path]]:
-    """Find all {agent_name}/prompts/{prompt_name}.txt, return (registry_name, path)."""
+    """Find prompts/{agent}/{instruction,description}.txt, return (registry_name, path).
+
+    Registry name format: projectname.agentname.instruction or projectname.agentname.description
+    """
     results: list[tuple[str, Path]] = []
     root = root.resolve()
+    project_name = "academic_research"
 
     for prompts_dir in root.rglob("prompts"):
         if not prompts_dir.is_dir():
             continue
-        # agent_dir = parent of prompts/
+        # agent_dir = parent of prompts/ (e.g. academic_research)
         agent_dir = prompts_dir.parent
-        # agent_name = relative path from root, use / for registry
         try:
             agent_rel = agent_dir.relative_to(root)
         except ValueError:
             continue
-        agent_name = str(agent_rel).replace("\\", ".")
+        if str(agent_rel).replace("\\", "/") != project_name:
+            continue
 
-        for path in prompts_dir.glob("*.txt"):
-            if path.is_file():
-                prompt_name = path.stem
-                registry_name = f"{agent_name}.{prompt_name}"
-                results.append((registry_name, path))
+        for agent_folder in prompts_dir.iterdir():
+            if not agent_folder.is_dir():
+                continue
+            agent_name = agent_folder.name
+            for kind in ("instruction", "description"):
+                path = agent_folder / f"{kind}.txt"
+                if path.is_file():
+                    registry_name = f"{project_name}.{agent_name}.{kind}"
+                    results.append((registry_name, path))
 
     return sorted(results, key=lambda x: x[0])
 

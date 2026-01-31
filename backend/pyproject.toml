@@ -82,6 +82,9 @@ example_question = "Analyze the Attention is All You Need paper"
 [tool.agent-starter-pack.settings]
 agent_directory = "academic_research"
 
+[tool.hatch.build.targets.wheel]
+packages = ["academic_research"]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

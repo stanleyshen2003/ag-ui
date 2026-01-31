@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Academic_websearch_agent for finding research papers using search tools."""
+"""Trend survey agent for identifying research trends and emerging topics."""
 
 # pylint: disable=unused-import
-from .agent import academic_websearch_agent
+from .agent import trend_survey_agent

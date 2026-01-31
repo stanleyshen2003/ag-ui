@@ -1,0 +1,1 @@
+Searches for recent academic papers by research topic, keywords, or (when specified) papers citing a given paper. Use when you need to find relevant papers from the current and previous year.

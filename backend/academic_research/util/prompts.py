@@ -22,8 +22,21 @@ _PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
 
 
 def load_prompt(name: str) -> str:
-    """Load prompt template by name from academic_research/prompts/{name}.txt."""
-    path = _PROMPTS_DIR / f"{name}.txt"
+    """Load prompt template by name.
+
+    Expects name in format: agentname/instruction or agentname/description
+    Resolves to prompts/agentname/instruction.txt or prompts/agentname/description.txt.
+    """
+    if "/" not in name:
+        raise ValueError(
+            f"Prompt name must be '<agent>/instruction' or '<agent>/description', got: {name!r}"
+        )
+    agent, kind = name.split("/", 1)
+    if kind not in ("instruction", "description"):
+        raise ValueError(
+            f"Prompt kind must be 'instruction' or 'description', got: {kind!r}"
+        )
+    path = _PROMPTS_DIR / agent / f"{kind}.txt"
     if not path.exists():
         raise FileNotFoundError(f"Prompt file not found: {path}")
     return path.read_text(encoding="utf-8").strip()
