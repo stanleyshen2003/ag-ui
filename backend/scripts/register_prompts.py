@@ -15,8 +15,8 @@
 
 """Register all prompts to MLflow Prompt Registry.
 
-Run this script to create new prompt versions in MLflow. Each run creates
-a new version for each prompt, enabling version history and tracking.
+Discovers prompts by scanning for {agent_name}/prompts/{prompt_name}.txt and
+registers each as agent_name/prompt_name. Self-contained, no project imports.
 
 Usage:
     python scripts/register_prompts.py [--commit-message MESSAGE]
@@ -35,12 +35,38 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Add backend to path for imports
-backend_dir = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(backend_dir))
+
+def _backend_dir() -> Path:
+    return Path(__file__).resolve().parent.parent
 
 
-def get_git_commit_info() -> str:
+def _discover_prompts(root: Path) -> list[tuple[str, Path]]:
+    """Find all {agent_name}/prompts/{prompt_name}.txt, return (registry_name, path)."""
+    results: list[tuple[str, Path]] = []
+    root = root.resolve()
+
+    for prompts_dir in root.rglob("prompts"):
+        if not prompts_dir.is_dir():
+            continue
+        # agent_dir = parent of prompts/
+        agent_dir = prompts_dir.parent
+        # agent_name = relative path from root, use / for registry
+        try:
+            agent_rel = agent_dir.relative_to(root)
+        except ValueError:
+            continue
+        agent_name = str(agent_rel).replace("\\", ".")
+
+        for path in prompts_dir.glob("*.txt"):
+            if path.is_file():
+                prompt_name = path.stem
+                registry_name = f"{agent_name}.{prompt_name}"
+                results.append((registry_name, path))
+
+    return sorted(results, key=lambda x: x[0])
+
+
+def get_git_commit_info(backend_dir: Path) -> str:
     """Get current git commit hash and message for traceability."""
     try:
         rev = subprocess.run(
@@ -62,34 +88,30 @@ def get_git_commit_info() -> str:
         return "manual registration"
 
 
-def register_prompts(commit_message: str | None = None) -> None:
-    """Register all prompts from the prompts directory to MLflow."""
+def register_prompts(root: Path, commit_message: str | None = None) -> None:
+    """Discover and register all prompts to MLflow."""
     import mlflow
 
-    from academic_research.prompts import PROMPT_REGISTRY
-
     if commit_message is None:
-        commit_message = get_git_commit_info()
+        commit_message = get_git_commit_info(root)
 
-    prompts_dir = backend_dir / "prompts"
+    prompts = _discover_prompts(root)
+    if not prompts:
+        print("No prompts found (expected {agent_name}/prompts/*.txt)")
+        return
 
-    for prompt_name, filename in PROMPT_REGISTRY.items():
-        prompt_path = prompts_dir / filename
-        if not prompt_path.exists():
-            raise FileNotFoundError(f"Prompt file not found: {prompt_path}")
-
+    for registry_name, prompt_path in prompts:
         template = prompt_path.read_text(encoding="utf-8").strip()
-
         prompt = mlflow.genai.register_prompt(
-            name=prompt_name,
+            name=registry_name,
             template=template,
             commit_message=commit_message,
             tags={
-                "project": "academic-research",
-                "source": "prompts",
+                "source": "file",
+                "path": str(prompt_path.relative_to(root)).replace("\\", "/"),
             },
         )
-        print(f"Registered '{prompt_name}' -> version {prompt.version}")
+        print(f"Registered '{registry_name}' -> version {prompt.version}")
 
 
 def main() -> int:
@@ -99,19 +121,28 @@ def main() -> int:
         "-m",
         help="Commit message for the prompt version",
     )
+    parser.add_argument(
+        "--root",
+        "-r",
+        type=Path,
+        default=None,
+        help="Root directory to scan (default: parent of scripts/)",
+    )
     args = parser.parse_args()
+
+    root = args.root or _backend_dir()
 
     # COMMIT_MESSAGE env takes precedence (avoids shell quoting in CI)
     commit_message = os.environ.get("COMMIT_MESSAGE") or args.commit_message
 
     # Ensure MLflow tracking URI is set (default to local if not set)
     if not os.environ.get("MLFLOW_TRACKING_URI"):
-        default_uri = (backend_dir / "mlruns").as_uri()
+        default_uri = (root / "mlruns").as_uri()
         os.environ["MLFLOW_TRACKING_URI"] = default_uri
         print(f"Using default MLFLOW_TRACKING_URI: {default_uri}")
 
     try:
-        register_prompts(commit_message=commit_message)
+        register_prompts(root, commit_message=commit_message)
         return 0
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)

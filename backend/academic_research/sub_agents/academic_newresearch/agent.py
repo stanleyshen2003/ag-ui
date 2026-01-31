@@ -16,12 +16,12 @@
 
 from google.adk import Agent
 
-from academic_research.prompts import get_prompt
+from academic_research.util.prompts import load_prompt
 
 MODEL = "gemini-2.5-pro"
 
 academic_newresearch_agent = Agent(
     model=MODEL,
     name="academic_newresearch_agent",
-    instruction=get_prompt("academic_newresearch"),
+    instruction=load_prompt("academic_newresearch"),
 )

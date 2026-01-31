@@ -12,20 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Academic_websearch_agent for finding research papers using search tools."""
-
-from google.adk import Agent
-from google.adk.tools import google_search
-
-from academic_research.util.prompts import load_prompt
-
-MODEL = "gemini-2.5-pro"
-
-
-academic_websearch_agent = Agent(
-    model=MODEL,
-    name="academic_websearch_agent",
-    instruction=load_prompt("academic_websearch"),
-    output_key="recent_citing_papers",
-    tools=[google_search],
-)
+"""Utility modules for academic research."""

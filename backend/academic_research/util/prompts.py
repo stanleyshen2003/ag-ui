@@ -12,20 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Academic_websearch_agent for finding research papers using search tools."""
+"""Load prompts from local files in academic_research/prompts/."""
 
-from google.adk import Agent
-from google.adk.tools import google_search
+from __future__ import annotations
 
-from academic_research.util.prompts import load_prompt
+from pathlib import Path
 
-MODEL = "gemini-2.5-pro"
+_PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
 
 
-academic_websearch_agent = Agent(
-    model=MODEL,
-    name="academic_websearch_agent",
-    instruction=load_prompt("academic_websearch"),
-    output_key="recent_citing_papers",
-    tools=[google_search],
-)
+def load_prompt(name: str) -> str:
+    """Load prompt template by name from academic_research/prompts/{name}.txt."""
+    path = _PROMPTS_DIR / f"{name}.txt"
+    if not path.exists():
+        raise FileNotFoundError(f"Prompt file not found: {path}")
+    return path.read_text(encoding="utf-8").strip()

@@ -6,7 +6,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "backend/prompts/**"
+      - "backend/academic_research/prompts/**"
       - ".github/workflows/register-prompts.yml"
   workflow_dispatch:
 

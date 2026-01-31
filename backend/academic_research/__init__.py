@@ -25,10 +25,3 @@ load_dotenv()
 # Use Google AI Studio API key when set; otherwise fall back to Vertex AI (GCP).
 if os.getenv("GOOGLE_API_KEY"):
     os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "0"
-else:
-    import google.auth
-
-    _, project_id = google.auth.default()
-    os.environ.setdefault("GOOGLE_CLOUD_PROJECT", project_id)
-    os.environ["GOOGLE_CLOUD_LOCATION"] = "global"
-    os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "1")
