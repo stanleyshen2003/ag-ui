@@ -42,7 +42,10 @@ jobs:
           fi
 
       - name: Register prompts to MLflow
-        run: uv run python scripts/register_prompts.py --commit-message "CI: ${{ github.sha }} - ${{ github.event.head_commit.message }}"
+        env:
+          COMMIT_MESSAGE: |-
+            CI: ${{ github.sha }} - ${{ github.event.head_commit.message || 'workflow run' }}
+        run: uv run python scripts/register_prompts.py
 
       - name: Upload MLflow artifacts (when using local store)
         if: success() && hashFiles('backend/mlruns/**') != ''

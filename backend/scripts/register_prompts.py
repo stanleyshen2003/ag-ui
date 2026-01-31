@@ -24,6 +24,7 @@ Usage:
 
 Environment:
     MLFLOW_TRACKING_URI: MLflow tracking server URI (default: ./mlruns for local)
+    COMMIT_MESSAGE: Override commit message (used by CI; avoids shell quoting issues)
 """
 
 from __future__ import annotations
@@ -100,6 +101,9 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    # COMMIT_MESSAGE env takes precedence (avoids shell quoting in CI)
+    commit_message = os.environ.get("COMMIT_MESSAGE") or args.commit_message
+
     # Ensure MLflow tracking URI is set (default to local if not set)
     if not os.environ.get("MLFLOW_TRACKING_URI"):
         default_uri = (backend_dir / "mlruns").as_uri()
@@ -107,7 +111,7 @@ def main() -> int:
         print(f"Using default MLFLOW_TRACKING_URI: {default_uri}")
 
     try:
-        register_prompts(commit_message=args.commit_message)
+        register_prompts(commit_message=commit_message)
         return 0
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
