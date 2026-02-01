@@ -1,0 +1,19 @@
+# Dependencies and build output (rebuilt in container)
+node_modules
+.next
+out
+
+# Env and secrets (inject at runtime)
+.env
+.env.*
+!.env.example
+
+# Git and IDE
+.git
+.gitignore
+*.md
+
+# Misc
+npm-debug.log*
+.DS_Store
+*.tsbuildinfo
