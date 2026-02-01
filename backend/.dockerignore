@@ -22,5 +22,6 @@ scripts
 .git
 .gitignore
 *.md
+!README.md
 *.ps1
 *.svg

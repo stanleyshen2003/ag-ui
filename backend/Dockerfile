@@ -4,11 +4,11 @@ FROM python:3.12-slim AS builder
 
 WORKDIR /app
 
-# Install uv (minimal, no extra deps).
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+# Install uv via pip (avoids ghcr.io pull; slim image has pip).
+RUN pip install --no-cache-dir uv
 
-# Copy dependency manifests and app code.
-COPY pyproject.toml uv.lock ./
+# Copy dependency manifests and app code (README.md required by hatchling).
+COPY pyproject.toml uv.lock README.md ./
 COPY main.py ./
 COPY academic_research ./academic_research/
 
