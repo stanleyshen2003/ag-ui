@@ -10,8 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  # Image name only; project is in HARBOR_URL (e.g. harbor.stanley.winlab.tw/agent → .../agent/backend:tag)
-  IMAGE_REPO: backend
+  IMAGE_REPO: agent/backend
 
 jobs:
   build-and-push:
