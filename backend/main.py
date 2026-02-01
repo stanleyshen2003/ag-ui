@@ -21,7 +21,13 @@ Then open the HTML chat at http://localhost:8080 (serve web/ separately)
 or use any AG-UI client pointing at http://localhost:8000/
 """
 
+import os
+
+import dotenv
 from ag_ui_adk import ADKAgent, add_adk_fastapi_endpoint
+
+# Load .env from backend directory so GOOGLE_API_KEY etc. are available.
+dotenv.load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

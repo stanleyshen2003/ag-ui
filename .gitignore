@@ -9,6 +9,7 @@ __pycache__/
 backend/.venv/
 backend/.env
 backend/mlruns/
+backend/.pytest_cache
 
 # Frontend (Next.js)
 frontend/node_modules/
