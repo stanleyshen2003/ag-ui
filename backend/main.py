@@ -32,6 +32,10 @@ dotenv.load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 # Initialize AgentOps for trace and cost monitoring when API key is set.
 # See https://docs.agentops.ai/v2/integrations/google_adk
 if os.getenv("AGENTOPS_API_KEY"):
+    os.environ.setdefault(
+        "AGENTOPS_LOGGING_TO_FILE", "FALSE"
+    )  # Avoid PermissionError in containers (no write to /app/agentops.log)
+    os.environ.setdefault("AGENTOPS_LOG_LEVEL", "WARNING")
     import agentops
     agentops.init(
         fail_safe=True,  # Do not crash the server if AgentOps has issues

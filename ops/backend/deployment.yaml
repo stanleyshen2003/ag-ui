@@ -44,6 +44,10 @@ spec:
                   name: backend-secret
                   key: AGENTOPS_API_KEY
                   optional: true
+            - name: AGENTOPS_LOG_LEVEL
+              value: "WARNING"
+            - name: AGENTOPS_LOGGING_TO_FILE
+              value: "FALSE"
           livenessProbe:
             httpGet:
               path: /health
