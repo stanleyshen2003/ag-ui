@@ -17,13 +17,14 @@ kubectl create secret generic backend-secret \
   --from-literal=GOOGLE_API_KEY=<your-google-api-key>
 ```
 
-Optional keys (for higher rate limits / MLflow):
+Optional keys (for higher rate limits, MLflow, or AgentOps monitoring):
 
 ```bash
 kubectl create secret generic backend-secret \
   --from-literal=GOOGLE_API_KEY=<key> \
   --from-literal=SEMANTIC_SCHOLAR_API_KEY=<key> \
   --from-literal=MLFLOW_TRACKING_URI=<uri> \
+  --from-literal=AGENTOPS_API_KEY=<key> \
   --dry-run=client -o yaml | kubectl apply -f -
 ```
 

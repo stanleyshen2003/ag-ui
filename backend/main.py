@@ -28,6 +28,17 @@ from ag_ui_adk import ADKAgent, add_adk_fastapi_endpoint
 
 # Load .env from backend directory so GOOGLE_API_KEY etc. are available.
 dotenv.load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+
+# Initialize AgentOps for trace and cost monitoring when API key is set.
+# See https://docs.agentops.ai/v2/integrations/google_adk
+if os.getenv("AGENTOPS_API_KEY"):
+    import agentops
+    agentops.init(
+        fail_safe=True,  # Do not crash the server if AgentOps has issues
+        instrument_llm_calls=True,  # Track LLM token usage and cost
+        default_tags=["academic_research", "google_adk"],
+    )
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 

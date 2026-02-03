@@ -38,6 +38,12 @@ spec:
                   name: backend-secret
                   key: MLFLOW_TRACKING_URI
                   optional: true
+            - name: AGENTOPS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: AGENTOPS_API_KEY
+                  optional: true
           livenessProbe:
             httpGet:
               path: /health

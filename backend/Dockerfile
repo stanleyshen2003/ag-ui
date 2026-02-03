@@ -46,4 +46,4 @@ USER appuser
 EXPOSE 8000
 
 # Run AG-UI server; Next.js frontend should point at this (e.g. NEXT_PUBLIC_AG_UI_URL=http://backend:8000).
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--log-level", "warning"]
