@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: backend
-          image: harbor.stanley.winlab.tw/agent/backend:23ac5a3
+          image: harbor.stanley.winlab.tw/agent/backend:7d515eb
           ports:
             - containerPort: 8000
               name: http
