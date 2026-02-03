@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: harbor.stanley.winlab.tw/agent/frontend:4410451
+          image: harbor.stanley.winlab.tw/agent/frontend:b3f23e3
           ports:
             - containerPort: 3000
               name: http
