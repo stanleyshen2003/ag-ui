@@ -74,5 +74,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git pull --rebase origin ${{ github.ref_name }}
           git add ops/frontend/deployment.yaml
-          git diff --staged --quiet || (git commit -m "chore(ops): pin frontend deployment to image ${{ steps.sha.outputs.short_sha }}" && git push)
+          git diff --staged --quiet || (git commit -m "chore(ops): pin frontend deployment to image ${{ steps.sha.outputs.short_sha }}" && git push origin ${{ github.ref_name }})
