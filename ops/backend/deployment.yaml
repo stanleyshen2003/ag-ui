@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  labels:
+    app: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: harbor.stanley.winlab.tw/agent/backend:latest
+          ports:
+            - containerPort: 8000
+              name: http
+          env:
+            - name: GOOGLE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: GOOGLE_API_KEY
+            - name: SEMANTIC_SCHOLAR_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: SEMANTIC_SCHOLAR_API_KEY
+                  optional: true
+            - name: MLFLOW_TRACKING_URI
+              valueFrom:
+                secretKeyRef:
+                  name: backend-secret
+                  key: MLFLOW_TRACKING_URI
+                  optional: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5

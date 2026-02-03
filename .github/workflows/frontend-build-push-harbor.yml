@@ -17,7 +17,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
 
     steps:
@@ -31,7 +31,7 @@ jobs:
         id: registry
         run: |
           # HARBOR_URL = "harbor.example.com" or "harbor.example.com/myproject" (image prefix)
-          url="${{ secrets.HARBOR_URL }}"
+          url=harbor.stanley.winlab.tw
           echo "host=${url%%/*}" >> $GITHUB_OUTPUT
           echo "image_prefix=$url" >> $GITHUB_OUTPUT
 
@@ -61,3 +61,18 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Set short SHA
+        id: sha
+        run: echo "short_sha=${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+
+      - name: Update ops deployment image tag
+        run: |
+          sed -i 's|\(image: harbor.stanley.winlab.tw/agent/frontend:\).*|\1${{ steps.sha.outputs.short_sha }}|' ops/frontend/deployment.yaml
+
+      - name: Commit and push deployment update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ops/frontend/deployment.yaml
+          git diff --staged --quiet || (git commit -m "chore(ops): pin frontend deployment to image ${{ steps.sha.outputs.short_sha }}" && git push)
